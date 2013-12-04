@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Rollerskates unit tests</title>
+    <!-- QUnit CSS -->
+    <link rel="stylesheet" href="http:///code.jquery.com/qunit/qunit-1.12.0.css">
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <!-- jQuery -->
+    <script src="http://discoapi.com/js/lib/jquery.min.js"></script>
+    <!-- Rollerskates -->
+    <script src="../src/rollerskates.js"></script>
+    <!-- QUnit JS -->
+    <script src="http://code.jquery.com/qunit/qunit-1.12.0.js"></script>
+    <!-- QUnit Conf -->
+    <script src="qunit.conf.js"></script>
+    <!-- Tests -->
+    <script src="querytests.js"></script> 
+    <script src="itemFactoryTests.js"></script>
+  </body>
+
+
+  <!-- item template -->
+  <script type="text/discojs" class="itemtemplate">
+  	  <div class="item">
+        <p>{author}
+           {text}
+           {provider}
+        </p>
+	  </div>
+  </script>
+
+  
+</html>
