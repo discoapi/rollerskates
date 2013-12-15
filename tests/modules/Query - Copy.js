@@ -29,7 +29,7 @@ stop: false
 	 */
 	var query = undefined;
 	
-	module("Query Tests", {
+	module("rollerskates.Query", {
 		setup: function(){
 			// code to run in start of each test
 			query = new discojs.Query({
@@ -38,12 +38,12 @@ stop: false
 		}
 	});
 
-	test("simplequery creation", function() {
+	test("simple query creation", function() {
 		equal(query.url, 'https://discoapi.com/api/query');
 		equal(query.apidata.q, 'obama');
 	});
 
-	test("query set", function(){
+	test("set()", function(){
 		query.set('media_type','video');
 		equal(query.apidata.media_type, 'video');
 	});

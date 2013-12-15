@@ -18,19 +18,35 @@
     <!-- QUnit Conf -->
     <script src="qunit.conf.js"></script>
     <!-- Tests -->
-    <script src="querytests.js"></script> 
-    <script src="itemFactoryTests.js"></script>
+    <script src="modules/Base.js"></script> 
+    <script src="modules/Query.js"></script> 
+    <script src="modules/PostsFactory.js"></script> 
   </body>
 
 
   <!-- item template -->
-  <script type="text/discojs" class="itemtemplate">
-  	  <div class="item">
+  <script type="text/discojs" class="post_template text">
+  	  <div class="post">
         <p>{author}
            {text}
            {provider}
         </p>
 	  </div>
+  </script>
+  
+  <!-- item template -->
+  <script type="text/discojs" class="post_template image">
+		<div class="post image">
+			<img src="{img_src}" alt="@{author}" />
+		</div>
+  </script>
+  
+  <!-- addMapper() test -->
+  <script type="text/discojs" id="template_addMapper">
+		<div class="post">
+			<span class="myProperty">{myProperty}</span>
+			<span class="author">{author}</span>
+		</div>
   </script>
 
   

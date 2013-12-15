@@ -1,55 +1,76 @@
 (function(){
 
-	discojs = {};
+	rollerskates = {};
 	
-	discojs.init = function(defaults){
-		discojs._defaults = defaults;
+	rollerskates.init = function(defaults){
+		rollerskates._defaults = defaults;
 	};
 
 	/**
-	*	discojs.Base
+	*	rollerskates.Base
 	*/	
 	
-	discojs.Base = function(){
+	rollerskates.Base = function(){
 		this._listeners = {};
 		this._loadingstate = false;
 	};
 	
-	discojs.Base.prototype = {
+	rollerskates.Base.prototype = {
+	
 		addEventListener: function(event, context, callback){
 			if(typeof(context)=='function'){
-				callback = context,
-				context = {};
+				callback = context
 			}
 			this._listeners[event] = this._listeners[event] || [];
 			this._listeners[event].push({context: context, callback: callback});
 		},
+		
+		listenOnce: function(event, context, callback){
+			if(typeof(context)=='function'){
+				callback = context
+			}
+			var me = this,
+				uniquecontext = { event: event, context: context, callback: callback};
+			function handler(){
+				me.removeEventListener(event, context, callback);
+				me.removeEventListener(event, uniquecontext, handler);
+			}
+			this.addEventListener(event, context, callback);
+			this.addEventListener(event, uniquecontext, handler);
+		},
+		
 		removeEventListener: function(event, context, callback){
 			if(this._listeners[event]){
 				for(var i=0; i<this._listeners[event].length; i++){
 					var listener = this._listeners[event][i];
 					if(listener.context==context && listener.callback==callback){
-						this._listeners[event].splice(i,1);
-						i--;
+						listener.removed = true;
 					}
 				}
 			}
 		},
+		
 		fireEvent: function(event, data){
 			if(this._listeners[event]){
-				for(var i=0; i<this._listeners[event].length; i++){
-					this._listeners[event][i].callback.apply(this._listeners[event][i].context || {}, data || []);
+				var length = this._listeners[event].length;
+				for(var i=0; i<length; i++){
+					var listener = this._listeners[event][i];
+					if(!listener.removed){
+						listener.callback.apply(listener.context || {}, data || []);
+					}
 				}
 			}
 		},
+		
+		isLoading: function(){
+			return this._loadingstate;
+		},
+		
 		_setLoadingState: function(loadingstate){
 			if(this._loadingstate != loadingstate){
 				this._loadingstate = loadingstate;
 				this.fireEvent('loadingstatechange', [loadingstate]);
 			}
-		},
-		isLoading: function(){
-			return this._loadingstate;
 		}
 	};	
 
@@ -64,16 +85,16 @@
 	}
 
 	/**
-	*	discojs.APICall
+	*	rollerskates.APICall
 	*/
 	
-	discojs.APICall = function(apidata){
-		discojs.Base.apply(this, arguments);
+	rollerskates.APICall = function(apidata){
+		rollerskates.Base.apply(this, arguments);
 		this.apidata = apidata || {};
 	};
 	
 	
-	inherit( discojs.APICall, discojs.Base,
+	inherit( rollerskates.APICall, rollerskates.Base,
 	{	
 		
 		start: function(){
@@ -111,10 +132,10 @@
 		
 		_getData: function(){
 			var data = this.apidata;
-			if(discojs._defaults){
-				for(var key in discojs._defaults){
+			if(rollerskates._defaults){
+				for(var key in rollerskates._defaults){
 					if(typeof(data[key])=='undefined'){
-						data[key] = discojs._defaults[key];
+						data[key] = rollerskates._defaults[key];
 					}
 				}
 			}
@@ -126,15 +147,15 @@
 		},
 		
 		_handleSuccess: function(response){
+			this._setLoadingState(false);
 			this._lastResponse = response;
 			this._handleResponse(response);
-			this._setLoadingState(false);
 		},
 		
 		_handleError: function(response){
+			this._setLoadingState(false);
 			this._lastResponse = undefined;
 			this.fireEvent('error', arguments);
-			this._setLoadingState(false);
 		},
 		
 		_handleResponse: function(response){}
@@ -142,7 +163,7 @@
 	});
 
 	/**
-	*	discojs.Query
+	*	rollerskates.Query
 	*	events: [
 			success,
 			itemsfound,
@@ -153,13 +174,13 @@
 		]
 	*/
 	
-	discojs.Query = function(apidata){
-		discojs.APICall.apply(this, arguments);
+	rollerskates.Query = function(apidata){
+		rollerskates.APICall.apply(this, arguments);
 		this.url = 'https://discoapi.com/api/query';
 		this.addEventListener('start', this, this._checkPageLimits);
 	};
 	
-	inherit( discojs.Query, discojs.APICall,
+	inherit( rollerskates.Query, rollerskates.APICall,
 	{
 		nextPage: function(){
 			this.apidata.page = this.apidata.page || 1;
@@ -177,12 +198,14 @@
 			}
 		},
 		
+		goToPage: function(n){
+			this.apidata.page = n;
+			this.start();		
+		},
+		
 		set: function(property, value){
 			this.apidata.page = 1;
 			this.apidata[property] = value;
-			if(property == 'max_results'){
-				this._calculateNumberOfPages();
-			}
 		},
 		
 		getNumberOfPages: function(){
@@ -214,8 +237,8 @@
 			this._totalItems = totalItems;
 			if(isDifferent){
 				this.fireEvent('numberoftotalitemschange', [totalItems]);
-				this._calculateNumberOfPages();
 			}
+			this._calculateNumberOfPages();
 		}, 
 		
 		_calculateNumberOfPages: function(){
@@ -262,44 +285,44 @@
 	
 
 	/**
-	*	discojs.ItemsFactory
+	*	rollerskates.PostsFactory
 	*	events: [
-	*		itemcreated,
-	*		itemscreated,
+	*		postcreated,
+	*		postscreated,
 	*		loadingstatechange
 	*	]
 	*/
 	
-	discojs.ItemsFactory = function(templatenode){
-		discojs.Base.apply(this, arguments);
+	rollerskates.PostsFactory = function(templatenode){
+		rollerskates.Base.apply(this, arguments);
 		this._components = [];
 		this._itemMappers = [];
 		this._Elements = {};
 		this._idsFound = [];
 		this._templates = [];
-		for(var i=0; i<discojs.ItemsFactory.defaultMappers.length; i++){
-			this.addItemMapper(discojs.ItemsFactory.defaultMappers[i]);
+		for(var i=0; i<rollerskates.PostsFactory.defaultMappers.length; i++){
+			this.addMapper(rollerskates.PostsFactory.defaultMappers[i]);
 		}
 		if(templatenode){
 			this.setTemplate(templatenode);
 		}
 	};
 	
-	inherit( discojs.ItemsFactory, discojs.Base,
+	inherit( rollerskates.PostsFactory, rollerskates.Base,
 	{
 	
 		connectQuery: function(query){
-			if(query instanceof discojs.Query){
+			if(query instanceof rollerskates.Query){
 				this._components.push(query);
 				query.addEventListener('itemsfound', this, this._handleItemsFound);
 				query.addEventListener('loadingstatechange', this, this._handleLoadingStateChange);
 			}else{
-				console_error('query must be of type discojs.Query. query = ', query);
+				console_error('query must be of type rollerskates.Query. query = ', query);
 			}
 		},
 	
 		disconnectQuery: function(query){
-			if(query instanceof discojs.Query){
+			if(query instanceof rollerskates.Query){
 				query.removeEventListener('itemsfound', this, this._handleItemsFound);
 				query.removeEventListener('loadingstatechange', this, this._handleLoadingStateChange);
 				for(var i=0; i<this._components; i++){
@@ -309,7 +332,7 @@
 					}
 				}
 			}else{
-				console_error('query must be of type discojs.Query. query = ', query);
+				console_error('query must be of type rollerskates.Query. query = ', query);
 			}
 		},
 		
@@ -327,15 +350,37 @@
 			}
 		},
 		
-		addItemMapper: function(mapper){
+		addMapper: function(mapper){
 			if(typeof(mapper)=='function'){
-				this._itemMappers.push(mapper);			
+				this._itemMappers.push(mapper);
 			}else{
-				console_error('an item mapper must be a function. mapper = ', mapper);
+				console_error('a mapper must be a function. mapper = ', mapper);
 			}
 		},
 		
-		createFromItems: function(items){
+		createFromData: function(data){
+			if(typeof(data.length)!='number'){
+				data = [data];
+			}
+			var items = [];
+			for(var i=0; i<data.length; i++){
+				items[i] = jQuery.extend({}, data[i]);
+			}
+			if(this._preventDuplicates){
+				for(var i=0; i<items.length; i++){
+					for(var x=0; x<this._idsFound.length; x++){
+						if(items[i].id==this._idsFound[x]){
+							items.splice(i,1);
+							i--;
+							break;
+						}
+					}
+				}
+			}
+			for(var i=0; i<items.length; i++){
+				this._idsFound.push(items[i].id);
+			}
+			console.log('_preventDuplicates ?', this._preventDuplicates, items.length);
 			var validator = this._getAvailableValidator();
 			validator.setItems(items);
 			validator.start();
@@ -357,7 +402,7 @@
 		_getAvailableValidator: function(){
 			for(var i=0; i<this._components.length; i++){
 				var component = this._components[i];
-				if(component instanceof discojs.ItemsValidator && !component.isLoading()){
+				if(component instanceof rollerskates.ItemsValidator && !component.isLoading()){
 					return component;
 				}
 			}
@@ -366,7 +411,7 @@
 		
 		_createNewValidator: function(){			
 			var id = this._components.length,
-				validator = new discojs.ItemsValidator();
+				validator = new rollerskates.ItemsValidator();
 			validator.addEventListener('loadingstatechange', this, this._handleLoadingStateChange);
 			validator.addEventListener('itemvalid', this, function(item){
 				this._handleItemValidation(id, item);
@@ -379,21 +424,7 @@
 		},
 		
 		_handleItemsFound: function(items){
-			if(this._preventDuplicates){
-				for(var i=0; i<items.length; i++){
-					for(var x=0; x<this._idsFound.length; x++){
-						if(items[i].id==this._idsFound[x]){
-							items.splice(i,1);
-							i--;
-							break;
-						}
-					}
-				}
-			}
-			for(var i=0; i<items.length; i++){
-				this._idsFound.push(items[i].id);
-			}
-			this.createFromItems(items);
+			this.createFromData(items);
 		},
 		
 		_handleItemValidation: function(validator_id, item){
@@ -405,7 +436,7 @@
 		},
 		
 		_handleItemsValidation: function(validator_id){
-			this.fireEvent('itemscreated', [this._Elements[validator_id] || []]);
+			this.fireEvent('postscreated', [this._Elements[validator_id] || []]);
 			this._Elements[validator_id] = [];
 		},
 		
@@ -431,7 +462,7 @@
 				}
 				var jqueryitem = jQuery('<div>').html(html).find(':first');
 				jqueryitem.data('discoapi_data', item);
-				this.fireEvent('itemcreated', [jqueryitem]);
+				this.fireEvent('postcreated', [jqueryitem]);
 				return jqueryitem;
 			}
 		},
@@ -478,7 +509,7 @@
 	});
 	
 	
-	discojs.ItemsFactory.defaultMappers =
+	rollerskates.PostsFactory.defaultMappers =
 	[
 		function(item){
 			if(item.media_type=='video'){
@@ -489,18 +520,21 @@
 	];
 
 	/**
-	*	discojs.ItemsValidator
+	*	rollerskates.ItemsValidator
 	*/
 	
-	discojs.ItemsValidator = function(){
-		discojs.Base.apply(this, arguments);
-		this._validator = new discojs.ItemValidator();
+	rollerskates.ItemsValidator = function(){
+		rollerskates.Base.apply(this, arguments);
+		this._validator = new rollerskates.ItemValidator();
 		this._validator.addEventListener('complete', this, this._handleValidationComplete);
 	};
 	
-	inherit( discojs.ItemsValidator, discojs.Base,
+	inherit( rollerskates.ItemsValidator, rollerskates.Base,
 	{		
 		setItems: function(items){
+			if(typeof(items.length)!='number'){
+				items = [items];
+			}
 			this._items = items;
 			this._validItems = [];
 		},
@@ -533,14 +567,14 @@
 	});
 
 	/**
-	*	discojs.ItemValidator
+	*	rollerskates.ItemValidator
 	*/
 	
-	discojs.ItemValidator = function(){
-		discojs.Base.apply(this, arguments);
+	rollerskates.ItemValidator = function(){
+		rollerskates.Base.apply(this, arguments);
 	};
 	
-	inherit( discojs.ItemValidator, discojs.Base,
+	inherit( rollerskates.ItemValidator, rollerskates.Base,
 	{		
 		validate: function(item){
 			this._canceled = false;
@@ -587,21 +621,21 @@
 	});
 	
 	function console_error(string){
-		console.error('discojs: '+string);
+		console.error('rollerskates: '+string);
 	}
 	
 	/**
 	*
 	*/
 	
-	discojs.Stack = function(){
-		discojs.Base.apply(this, arguments);
+	rollerskates.Stack = function(){
+		rollerskates.Base.apply(this, arguments);
 		this._items = [];
 		this._isRunning = false;
 		this._interval = 1000;
 	};
 	
-	inherit( discojs.Stack, discojs.Base,
+	inherit( rollerskates.Stack, rollerskates.Base,
 	{
 		push: function(item){
 			this._items.push(item);
@@ -634,12 +668,12 @@
 	*
 	*/
 	
-	discojs.CSSFromTemplate = function(jquerynode){
+	rollerskates.CSSFromTemplate = function(jquerynode){
 		if(!(jquerynode instanceof jQuery)){
 			jquerynode = jQuery(jquerynode);
 		}
 		var styles = [],
-			providers = discojs.CSSFromTemplate.providers;
+			providers = rollerskates.CSSFromTemplate.providers;
 		for(var provider in providers){
 			var css = jquerynode.html(),
 				string = '{provider}';
@@ -658,12 +692,12 @@
 	};
 	
 	$(document).ready(function(){
-		$('.discojs-css-template').each(function(){
-			discojs.CSSFromTemplate(this);
+		$('.rollerskates-css-template').each(function(){
+			rollerskates.CSSFromTemplate(this);
 		});
 	});
 	
-	discojs.CSSFromTemplate.providers =
+	rollerskates.CSSFromTemplate.providers =
 	{
 		twitter: {
 			color: '#5b8ec9',
