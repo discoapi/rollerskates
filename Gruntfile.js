@@ -16,14 +16,19 @@ module.exports = function(grunt) {
 			files: ['tests/index.html']
 		},
 		watch:{
-			uglify: {
+			default: {
 				files: 'src/<%= pkg.name %>.js',
-				tasks: ['uglify','discoAPICopy']
+				tasks: ['uglify','copy']
+			},
+			latest: {
+				files: 'src/<%= pkg.name %>.js',
+				tasks: ['uglify','copy:latest']
 			}
 		},
-		discoAPICopy: {
-			src: 'build/<%= pkg.name %>.<%= pkg.version %>.min.js',
-			files: ['<%= pkg.name %>.<%= pkg.version %>.min.js','<%= pkg.name %>.latest.min.js'],
+		copy: {
+			src: ['build/<%= pkg.name %>.<%= pkg.version %>.min.js','src/<%= pkg.name %>.js'],
+			files: ['<%= pkg.name %>.<%= pkg.version %>.min.js','<%= pkg.name %>.<%= pkg.version %>.js'],
+			latest:[ '<%= pkg.name %>.latest.min.js','<%= pkg.name %>.latest.js'],
 			dest: '../public_html/js/lib/'
 		}
 				
@@ -44,13 +49,25 @@ module.exports = function(grunt) {
 	grunt.registerTask('test', ['qunit']);
 
 	// discoAPI devel
-	grunt.registerTask('discoAPIDevel', ['watch']);
-
-	grunt.registerTask('discoAPICopy', 'copy file into discoAPI public_html', function() {
-		var config = grunt.config.get('discoAPICopy');
+	grunt.registerTask('develop', function(param){
+		if (param == 'latest'){
+			grunt.task.run(['watch:latest']);
+		} else{
+			grunt.task.run(['watch:default']);
+		}
+	});
+					 
+	grunt.registerTask('copy', function(param) {
+		var config = grunt.config.get('copy');
 
 		for(var i=0;i<config.files.length;i++){
-			grunt.file.copy(config.src,config.dest+config.files[i]);
+			grunt.file.copy(config.src[i],config.dest+config.files[i]);
+		}
+
+		if (param === 'latest'){
+			for(var i=0;i<config.files.length;i++){
+				grunt.file.copy(config.src[i],config.dest+config.latest[i]);
+			}
 		}
 
 	});
