@@ -166,8 +166,8 @@
 	*	rollerskates.Query
 	*	events: [
 			success,
-			itemsfound,
-			noitemsfound,
+			postsfound,
+			nopostsfound,
 			numberoftotalitemschange,
 			numberofpageschange,
 			lastpagechange
@@ -222,10 +222,10 @@
 				this._handleResponseTotalItems(response.total_items);
 				if(response.items && response.items.length>0){
 					this.fireEvent('success', [response]);
-					this.fireEvent('itemsfound', [response.items]);
+					this.fireEvent('postsfound', [response.items]);
 				}else{
 					this.fireEvent('success', [response]);
-					this.fireEvent('noitemsfound', [response]);
+					this.fireEvent('nopostsfound', [response]);
 				}
 			}else{
 				this.fireEvent('error', [response]);
@@ -314,7 +314,7 @@
 		connectQuery: function(query){
 			if(query instanceof rollerskates.Query){
 				this._components.push(query);
-				query.addEventListener('itemsfound', this, this._handleItemsFound);
+				query.addEventListener('postsfound', this, this._handleItemsFound);
 				query.addEventListener('loadingstatechange', this, this._handleLoadingStateChange);
 			}else{
 				console_error('query must be of type rollerskates.Query. query = ', query);
@@ -323,7 +323,7 @@
 	
 		disconnectQuery: function(query){
 			if(query instanceof rollerskates.Query){
-				query.removeEventListener('itemsfound', this, this._handleItemsFound);
+				query.removeEventListener('postsfound', this, this._handleItemsFound);
 				query.removeEventListener('loadingstatechange', this, this._handleLoadingStateChange);
 				for(var i=0; i<this._components; i++){
 					var component = this._components[i];
@@ -719,6 +719,27 @@
 		},
 		tumblr: {
 			color: '#3d5a70',
+		},
+		vine: {
+			color: '#02a379',
+		},
+		picasa: {
+			color: '#e24e5a',
+		},
+		photobucket: {
+			color: '#000000',
+		},
+		metacafe: {
+			color: '#f94700',
+		},
+		google: {
+			color: '#45a445',
+		},
+		googleplus: {
+			color: '#45a445',
+		},
+		dailymotion: {
+			color: '#006792',
 		}
 	}
 	

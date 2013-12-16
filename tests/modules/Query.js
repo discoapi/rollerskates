@@ -129,25 +129,27 @@ stop: false
 	asyncTest("set()", function(){	
 		var query = new rollerskates.Query();
 		query.start();		
-		query.addEventListener('success', function(){		
-			(function(){
-				var number_of_events_fired = 0;
-				for(var i=0; i<all_events.length; i++){
-					var event = all_events[i];
-					query.addEventListener(event, event, function(){
-						console.log('event', this);
-						number_of_events_fired++;							
-					});
-				}
-				setTimeout(function(){
-					equal(number_of_events_fired, 0, 'number of events fired being 0');
-					start();
-				}, 4000);
-			})();		
-			query.set('media_type','video');				
-			query.set('max_results', 20);
-			equal(query.apidata.media_type, 'video', 'apidata being changed (media_type)');
-			equal(query.apidata.max_results, 20, 'apidata being changed (max_results)');
+		query.addEventListener('success', function(){
+			setTimeout(function(){
+				(function(){
+					var number_of_events_fired = 0;
+					for(var i=0; i<all_events.length; i++){
+						var event = all_events[i];
+						query.addEventListener(event, event, function(){
+							console.log('event', this);
+							number_of_events_fired++;							
+						});
+					}
+					setTimeout(function(){
+						equal(number_of_events_fired, 0, 'number of events fired being 0');
+						start();
+					}, 4000);
+				})();				
+				query.set('media_type','video');				
+				query.set('max_results', 20);
+				equal(query.apidata.media_type, 'video', 'apidata being changed (media_type)');
+				equal(query.apidata.max_results, 20, 'apidata being changed (max_results)');
+			}, 250);
 		});
 	});
 	
