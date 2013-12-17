@@ -3,13 +3,22 @@ module.exports = function(grunt) {
 	// Project configuration.
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
+		build: {
+			startCopy: {'src/rollerskates.js': '<%= pkg.name %>.<%= pkg.version %>.js'},
+			endCopy: ['<%= pkg.name %>.<%= pkg.version %>.js.map','<%= pkg.name %>.<%= pkg.version %>.min.js',
+					  '<%= pkg.name %>.<%= pkg.version %>.js'],
+			dest: 'build/'
+		},
+
 		uglify: {
 			options: {
-				banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+				banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+				sourceMap: '<%= pkg.name %>.<%= pkg.version %>.js.map',
+				sourceMappingURL: '<%= pkg.name %>.<%= pkg.version %>.js.map'
 			},
 			build: {
-				src: 'src/<%= pkg.name %>.js',
-				dest: 'build/<%= pkg.name %>.<%= pkg.version %>.min.js'
+				src: '<%= pkg.name %>.<%= pkg.version %>.js',
+				dest: '<%= pkg.name %>.<%= pkg.version %>.min.js'
 			}
 		},
 		qunit: {
@@ -26,9 +35,15 @@ module.exports = function(grunt) {
 			}
 		},
 		copy: {
-			src: ['build/<%= pkg.name %>.<%= pkg.version %>.min.js','src/<%= pkg.name %>.js'],
-			files: ['<%= pkg.name %>.<%= pkg.version %>.min.js','<%= pkg.name %>.<%= pkg.version %>.js'],
-			latest:[ '<%= pkg.name %>.latest.min.js','<%= pkg.name %>.latest.js'],
+			src: ['build/<%= pkg.name %>.<%= pkg.version %>.min.js',
+				  'build/<%= pkg.name %>.<%= pkg.version %>.js',
+				  'build/<%= pkg.name %>.<%= pkg.version %>.js.map'],
+			files: ['<%= pkg.name %>.<%= pkg.version %>.min.js',
+					'<%= pkg.name %>.<%= pkg.version %>.js',
+					'<%= pkg.name %>.<%= pkg.version %>.js.map'],
+			latest:[ '<%= pkg.name %>.latest.min.js',
+					 '<%= pkg.name %>.latest.js',
+					 '<%= pkg.name %>.<%= pkg.version %>.js.map'],
 			dest: '../public_html/js/lib/'
 		}
 				
@@ -43,7 +58,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 
 	// Default task(s).
-	grunt.registerTask('default', ['uglify']);
+	grunt.registerTask('default', ['build','copy']);
 
 	// other tests
 	grunt.registerTask('test', ['qunit']);
@@ -55,6 +70,33 @@ module.exports = function(grunt) {
 		} else{
 			grunt.task.run(['watch:default']);
 		}
+	});
+
+	grunt.registerTask('build', function(param) {
+		var config = grunt.config.get('build');
+
+		// copy src to root
+		if (param != "end"){
+			for(var target in config.startCopy ){
+				grunt.file.copy(target,config.startCopy[target]);
+			}
+
+		
+			// run uglify
+			grunt.task.run(['uglify','build:end']);
+		}
+
+		if (param == "end"){
+			
+			// copy file to dist and delete them
+			for(var i=0;i<config.endCopy.length;i++){
+				// copy file to dist
+				grunt.file.copy(config.endCopy[i],config.dest+config.endCopy[i]);
+				// delete from root
+				grunt.file.delete(config.endCopy[i]);
+			}
+		}
+		
 	});
 					 
 	grunt.registerTask('copy', function(param) {
