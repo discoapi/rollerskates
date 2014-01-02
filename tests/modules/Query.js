@@ -145,8 +145,10 @@ stop: false
 						start();
 					}, 4000);
 				})();				
-				query.set('media_type','video');				
-				query.set('max_results', 20);
+				query.set({
+					'media_type':'video',
+					'max_results': 20
+				});
 				equal(query.apidata.media_type, 'video', 'apidata being changed (media_type)');
 				equal(query.apidata.max_results, 20, 'apidata being changed (max_results)');
 			}, 250);
