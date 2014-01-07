@@ -19,7 +19,7 @@
 	
 		addEventListener: function(event, context, callback){
 			if(typeof(context)=='function'){
-				callback = context
+				callback = context;
 			}
 			this._listeners[event] = this._listeners[event] || [];
 			this._listeners[event].push({context: context, callback: callback});
@@ -27,7 +27,7 @@
 		
 		listenOnce: function(event, context, callback){
 			if(typeof(context)=='function'){
-				callback = context
+				callback = context;
 			}
 			var me = this,
 				uniquecontext = { event: event, context: context, callback: callback};
@@ -204,8 +204,17 @@
 		},
 		
 		set: function(property, value){
+
+			if (typeof property == 'object'){
+				var properties = property;
+				for (var property in properties){
+					this.apidata[property] = properties[property];
+				}
+			} else{
+				this.apidata[property] = value;
+			}
+
 			this.apidata.page = 1;
-			this.apidata[property] = value;
 		},
 		
 		getNumberOfPages: function(){
