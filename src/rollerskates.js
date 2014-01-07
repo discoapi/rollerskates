@@ -380,7 +380,6 @@
 			for(var i=0; i<items.length; i++){
 				this._idsFound.push(items[i].id);
 			}
-			console.log('_preventDuplicates ?', this._preventDuplicates, items.length);
 			var validator = this._getAvailableValidator();
 			validator.setItems(items);
 			validator.start();
