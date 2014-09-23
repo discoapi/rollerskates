@@ -105,8 +105,10 @@
 			this._everStarted = true;
 			this.fireEvent('start');
 			this._request = $.ajax({
-				method: 'get',
-				url: this._toUrl(),
+				method: 'POST',
+				url: this.url,
+				data: JSON.stringify(this._getData()),
+				processData: false,
 				dataType: 'json',
 				success: function(response){
 					search._handleSuccess(response);
