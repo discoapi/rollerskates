@@ -298,6 +298,7 @@
 	*	events: [
 	*		postcreated,
 	*		postscreated,
+	*		postinvalid,
 	*		loadingstatechange
 	*	]
 	*/
@@ -424,6 +425,9 @@
 			validator.addEventListener('itemvalid', this, function(item){
 				this._handleItemValidation(id, item);
 			});
+			validator.addEventListener('iteminvalid', this, function(item){
+				this._handleItemInvalid(item);
+			});
 			validator.addEventListener('complete', this, function(items){
 				this._handleItemsValidation(id, items);
 			});
@@ -438,9 +442,15 @@
 		_handleItemValidation: function(validator_id, item){
 			var el = this._createElementFromTemplate(item);
 			if(el){
+				this.fireEvent('postcreated', [el]);
 				this._Elements[validator_id] = this._Elements[validator_id] || [];
 				this._Elements[validator_id].push(el);
 			}
+		},
+		
+		_handleItemInvalid: function(item){
+			var el = this._createElementFromTemplate(item);
+			this.fireEvent('postinvalid', [el]);
 		},
 		
 		_handleItemsValidation: function(validator_id){
@@ -470,7 +480,6 @@
 				}
 				var jqueryitem = jQuery('<div>').html(html).find(':first');
 				jqueryitem.data('discoapi_data', item);
-				this.fireEvent('postcreated', [jqueryitem]);
 				return jqueryitem;
 			}
 		},
@@ -565,6 +574,8 @@
 			if(isValid){
 				this._validItems.push(item);
 				this.fireEvent('itemvalid', [item]);
+			}else{
+				this.fireEvent('iteminvalid', [item]);			
 			}
 			if(this._itemsCompleted==this._items.length){
 				this.fireEvent('complete', [this._validItems]);
